@@ -19,7 +19,7 @@ app.use((req, res, next) => {
 
 // ---------- PATH SETUP ----------
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-app.use(express.static(path.join(__dirname, "public")));
+
 
 // ---------- GEMINI CONFIG ----------
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -114,9 +114,7 @@ app.post("/chat", async (req, res) => {
 });
 
 // ---------- FALLBACK ----------
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
-});
+
 
 // ---------- START SERVER ----------
 const PORT = process.env.PORT || 3000;
