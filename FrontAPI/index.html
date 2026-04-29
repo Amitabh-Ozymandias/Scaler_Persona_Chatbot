@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scaler Personas — AI Chatbot</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f3f8;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+ 
+    .app {
+      width: 100%;
+      max-width: 700px;
+      height: 90vh;
+      max-height: 720px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.10);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+ 
+    /* Header */
+    .header {
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid #ece9f5;
+    }
+ 
+    .persona-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+ 
+    .tab-btn {
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1.5px solid #d0c9f0;
+      background: #fff;
+      color: #6b5fa0;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+ 
+    .tab-btn:hover { background: #f0edfb; }
+ 
+    .tab-btn.active {
+      background: #5b3cf5;
+      border-color: #5b3cf5;
+      color: #fff;
+    }
+ 
+    .active-persona {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+ 
+    .persona-avatar,
+.msg-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* 🔥 IMPORTANT FIX */
+  color: transparent;
+  font-size: 0;
+
+  /* image styling */
+  background-size: cover;
+  background-position: center;
+
+  flex-shrink: 0;
+}
+ 
+    .persona-name { font-size: 15px; font-weight: 600; color: #1a1523; }
+    .persona-role { font-size: 12px; color: #8c84a0; }
+ 
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      display: inline-block;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+ 
+    /* Messages */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+ 
+    .welcome {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #a89db8;
+      gap: 8px;
+    }
+ 
+    .welcome h2 { font-size: 20px; color: #1a1523; font-weight: 600; }
+    .welcome p { font-size: 14px; line-height: 1.5; }
+ 
+    .message { display: flex; gap: 8px; align-items: flex-end; max-width: 85%; }
+    .message.user { align-self: flex-end; flex-direction: row-reverse; }
+ 
+    
+ 
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+ 
+    .message.user .bubble {
+      background: #5b3cf5;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+ 
+    .message.bot .bubble {
+      background: #f4f3f8;
+      color: #1a1523;
+      border-bottom-left-radius: 4px;
+    }
+ 
+    .message.error .bubble {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      border-bottom-left-radius: 4px;
+    }
+ 
+    /* Typing indicator */
+    .typing-dots {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 16px;
+    }
+ 
+    .typing-dots span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #a89db8;
+      animation: bounce 1.2s infinite;
+    }
+ 
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+ 
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+ 
+    /* Chips */
+    .chips {
+      padding: 8px 18px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      flex-shrink: 0;
+      border-top: 1px solid #ece9f5;
+    }
+ 
+    .chips::-webkit-scrollbar { display: none; }
+ 
+    .chip {
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid #d0c9f0;
+      background: #fff;
+      color: #6b5fa0;
+      font-size: 12.5px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.12s;
+    }
+ 
+    .chip:hover {
+      background: #f0edfb;
+      border-color: #5b3cf5;
+      color: #5b3cf5;
+    }
+ 
+    /* Input */
+    .input-bar {
+      padding: 12px 18px;
+      border-top: 1px solid #ece9f5;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      background: #fff;
+    }
+ 
+    #userInput {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1.5px solid #d0c9f0;
+      font-family: inherit;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+      background: #f9f8fc;
+      color: #1a1523;
+      line-height: 1.5;
+      max-height: 100px;
+      overflow-y: auto;
+      transition: border 0.12s;
+    }
+ 
+    #userInput:focus { border-color: #5b3cf5; background: #fff; }
+    #userInput::placeholder { color: #a89db8; }
+ 
+    .send-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: none;
+      background: #5b3cf5;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.12s, transform 0.1s;
+    }
+ 
+    .send-btn:hover { opacity: 0.9; }
+    .send-btn:active { transform: scale(0.95); }
+    .send-btn:disabled { opacity: 0.35; cursor: default; }
+ 
+    /* Avatar colors per persona */
+    .avatar-anshuman {
+  background-image: url("./assets/Anshuman.jpeg");
+  background-size: cover;
+  background-position: center;
+}
+
+.avatar-abhimanyu {
+  background-image: url("./assets/Abhimanyu.jpeg");
+  background-size: cover;
+  background-position: center;
+}
+
+.avatar-kshitij {
+  background-image: url("./assets/Kshitij.jpeg");
+  background-size: cover;
+  background-position: center;
+}
+ 
+    /* Responsive */
+    @media (max-width: 500px) {
+      body { padding: 0; }
+      .app { border-radius: 0; height: 100vh; max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div class="persona-tabs" id="personaTabs"></div>
+      <div class="active-persona" id="activePersona"></div>
+    </div>
+ 
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcome">
+        <h2>Talk to Scaler's Founders</h2>
+        <p>Pick a persona above and ask anything about careers,<br>engineering, or life in tech.</p>
+      </div>
+    </div>
+ 
+    <div class="chips" id="chips"></div>
+ 
+    <div class="input-bar">
+      <textarea id="userInput" rows="1" placeholder="Ask something..."></textarea>
+      <button class="send-btn" id="sendBtn" title="Send">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+ 
+  <script>
+  // ✅ FIX 1: Explicit backend URL
+  const API_BASE = "http://localhost:3000";
+
+  const PERSONAS = {
+    anshuman: {
+      name: "Anshuman Singh",
+      initials: "AS",
+      role: "Co-founder & CTO, Scaler",
+      chips: [
+        "What makes a great engineer?",
+        "How did you build Scaler?",
+        "Advice for DSA prep?",
+        "Backend vs frontend career?",
+      ],
+    },
+    abhimanyu: {
+      name: "Abhimanyu Saxena",
+      initials: "AB",
+      role: "Co-founder, Scaler Academy",
+      chips: [
+        "How did InterviewBit start?",
+        "Tips for first job search?",
+        "What do top companies look for?",
+        "Career switch into tech?",
+      ],
+    },
+    kshitij: {
+      name: "Kshitij Mishra",
+      initials: "KM",
+      role: "Educator & Tech Lead, Scaler",
+      chips: [
+        "Best way to learn system design?",
+        "Explain consistent hashing simply",
+        "How to stop panicking in interviews?",
+        "What's your teaching philosophy?",
+      ],
+    },
+  };
+
+  let currentPersona = "anshuman";
+  const history = { anshuman: [], abhimanyu: [], kshitij: [] };
+  let isLoading = false;
+
+  function init() {
+    renderTabs();
+    renderActivePersona();
+    renderChips();
+
+    document.getElementById("userInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    document.getElementById("sendBtn").addEventListener("click", sendMessage);
+  }
+
+  function renderTabs() {
+    const container = document.getElementById("personaTabs");
+    container.innerHTML = Object.entries(PERSONAS)
+      .map(
+        ([id, p]) =>
+          `<button class="tab-btn ${id === currentPersona ? "active" : ""}"
+            onclick="switchPersona('${id}')">${p.name.split(" ")[0]}</button>`
+      )
+      .join("");
+  }
+
+  function renderActivePersona() {
+    const p = PERSONAS[currentPersona];
+    document.getElementById("activePersona").innerHTML = `
+      <div class="persona-avatar avatar-${currentPersona}">${p.initials}</div>
+      <div>
+        <div class="persona-name">${p.name}</div>
+        <div class="persona-role">${p.role}</div>
+      </div>
+      <div class="status-dot"></div>`;
+  }
+
+  function renderChips() {
+    const p = PERSONAS[currentPersona];
+    document.getElementById("chips").innerHTML = p.chips
+      .map((c) => `<button class="chip" onclick="useChip('${c.replace(/'/g, "\\'")}')">${c}</button>`)
+      .join("");
+  }
+
+  function renderMessages() {
+    const container = document.getElementById("messages");
+    const msgs = history[currentPersona];
+
+    if (msgs.length === 0) {
+      container.innerHTML = `
+        <div class="welcome">
+          <h2>Chat with ${PERSONAS[currentPersona].name}</h2>
+          <p>Use the chips below to get started,<br>or type your own question.</p>
+        </div>`;
+      return;
+    }
+
+    const p = PERSONAS[currentPersona];
+    container.innerHTML = msgs
+      .map((m) => {
+        if (m.role === "user") {
+          return `<div class="message user">
+            <div class="bubble">${escapeHtml(m.content)}</div>
+          </div>`;
+        }
+        return `<div class="message bot">
+          <div class="msg-avatar avatar-${currentPersona}">${p.initials}</div>
+          <div class="bubble">${escapeHtml(m.content)}</div>
+        </div>`;
+      })
+      .join("");
+
+    scrollToBottom();
+  }
+
+  function showTypingIndicator() {
+    const container = document.getElementById("messages");
+    const p = PERSONAS[currentPersona];
+    const el = document.createElement("div");
+    el.id = "typingIndicator";
+    el.className = "message bot";
+    el.innerHTML = `
+      <div class="msg-avatar avatar-${currentPersona}">${p.initials}</div>
+      <div class="bubble">
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>`;
+    container.appendChild(el);
+    scrollToBottom();
+  }
+
+  function removeTypingIndicator() {
+    document.getElementById("typingIndicator")?.remove();
+  }
+
+  function showErrorMessage(text) {
+    const container = document.getElementById("messages");
+    const el = document.createElement("div");
+    el.className = "message error";
+    el.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
+    container.appendChild(el);
+    scrollToBottom();
+  }
+
+  function scrollToBottom() {
+    const c = document.getElementById("messages");
+    c.scrollTop = c.scrollHeight;
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\n/g, "<br>");
+  }
+
+  function switchPersona(id) {
+    currentPersona = id;
+    renderTabs();
+    renderActivePersona();
+    renderChips();
+    renderMessages();
+  }
+
+  function useChip(text) {
+    document.getElementById("userInput").value = text;
+    sendMessage();
+  }
+
+  async function sendMessage() {
+    if (isLoading) return;
+
+    const input = document.getElementById("userInput");
+    const text = input.value.trim();
+    if (!text) return;
+
+    history[currentPersona].push({ role: "user", content: text });
+    input.value = "";
+
+    renderMessages();
+    showTypingIndicator();
+
+    isLoading = true;
+    document.getElementById("sendBtn").disabled = true;
+
+    try {
+      const res = await fetch(`${API_BASE}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: history[currentPersona],
+          personaId: currentPersona,
+        }),
+      });
+
+      removeTypingIndicator();
+
+      const textRes = await res.text(); // safer debug
+      let data;
+
+      try {
+        data = JSON.parse(textRes);
+      } catch {
+        throw new Error("Invalid JSON from server");
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || `Server error ${res.status}`);
+      }
+
+      history[currentPersona].push({
+        role: "assistant",
+        content: data.reply,
+      });
+
+      renderMessages();
+
+    } catch (err) {
+      removeTypingIndicator();
+      history[currentPersona].pop();
+      renderMessages();
+      showErrorMessage(err.message);
+    } finally {
+      isLoading = false;
+      document.getElementById("sendBtn").disabled = false;
+      input.focus();
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
